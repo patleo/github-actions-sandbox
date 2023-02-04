@@ -35,8 +35,8 @@ jobs:
             result="$(gh run list --workflow $WF_NAME --json displayTitle,status --jq '.[] | select(.displayTitle=="${{needs.generate-run-name.outputs.run-name}}")')"
             echo "$result"
             if [ -n "$result" ]; then
-              status="$(echo "$result" | jq '.status')"
-              if [ "$status" == 'completed' ]; then
+              status="$(echo "$result" | jq -r '.status')"
+              if [ "$status" == "completed" ]; then
                 echo "Job completed!"
                 break
               fi
