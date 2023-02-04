@@ -24,17 +24,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUN_NAME: ${{needs.generate-run-name.outputs.run-name}}
-      # - name: Trigger Workflow
-      #   uses: actions/github-script@v6
-      #   with:
-      #     script: |
-      #       const { RUN_NAME } = process.env
-      #       github.rest.actions.createWorkflowDispatch({
-      #         owner: context.repo.owner,
-      #         repo: context.repo.repo,
-      #         workflow_id: RUN_NAME,
-      #         ref: 'main',
-      #       })
   identify:
     needs: [generate-run-name, trigger]
     runs-on: ubuntu-latest
@@ -47,7 +36,7 @@ jobs:
             echo "$result"
             if [ -n "$result" ]; then
               status="$(echo "$result" | jq '.status')"
-              if [ "$status" == 'completed' ];
+              if [ "$status" == 'completed' ]; then
                 echo "Job completed!"
                 break
               fi
