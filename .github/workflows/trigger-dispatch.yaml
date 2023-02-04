@@ -1,15 +1,11 @@
 name: Workflow Dispatch Identify Run Test
 on:
   workflow_dispatch:
-    run-name:
-      description: 'Name of the workflow run'
-      required: true
-      default: '0123456789'
-      type: string
-end:
+env:
   WF_NAME: custom-run-name.yaml
 jobs:
   generate-run-name:
+    runs-on: ubuntu-latest
     outputs:
       run-name: ${{ steps.generate.outputs.run-name }}
     steps:
