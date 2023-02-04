@@ -1,0 +1,56 @@
+name: Workflow Dispatch Identify Run Test
+on:
+  workflow_dispatch:
+    run-name:
+      description: 'Name of the workflow run'
+      required: true
+      default: '0123456789'
+      type: string
+end:
+  WF_NAME: custom-run-name.yaml
+jobs:
+  generate-run-name:
+    outputs:
+      run-name: ${{ steps.generate.outputs.run-name }}
+    steps:
+      - name: Generate Run Name
+        id: generate
+        run: echo "run-name=$(date +%s )" >> $GITHUB_OUTPUT
+  trigger:
+    needs: [generate-run-name]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: gh workflow run $WF_NAME -f run-name=$RUN_NAME
+        env:
+          RUN_NAME: ${{needs.generate-run-name.outputs.run-name}}
+  identify:
+    needs: [generate-run-name, trigger]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          retries=0
+          while true
+            result="$(gh run list --workflow $WF_NAME --json displayTitle,status --jq '.[] | select(.displayTitle=="${{needs.generate-run-name.outputs.run-name}}")')"
+            echo "$result"
+            if [ -n "$result" ]; then
+              status="$(echo "$result" | jq '.status')"
+              if [ "$status" == 'completed' ];
+                echo "Job completed!"
+                break
+              fi
+              echo "Job exists but has not completed yet. Current status $status"
+            else
+              echo "A run named $RUN_NAME has not been found yet"
+            fi
+            if [ $retries -gt 10 ]; then
+              echo "Retries exceeded"
+              exit 1
+            fi
+            retries=$((retries+1))
+            sleep 20
+          done
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_NAME: ${{needs.generate-run-name.outputs.run-name}}
