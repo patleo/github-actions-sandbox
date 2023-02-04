@@ -15,23 +15,26 @@ jobs:
   trigger:
     needs: [generate-run-name]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     steps:
       - uses: actions/checkout@v3
-      # - run: gh workflow run $WF_NAME -f run-name=$RUN_NAME
-      - name: Trigger Workflow
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const { RUN_NAME } = process.env
-            github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: RUN_NAME,
-              ref: 'main',
-            })
+      - run: gh workflow run $WF_NAME -f run-name=$RUN_NAME
         env:
-          # GH_TOKEN: ${{ secrets.GITHUB_ }}
+          GH_TOKEN: ${{ secrets.GITHUB_ }}
           RUN_NAME: ${{needs.generate-run-name.outputs.run-name}}
+      # - name: Trigger Workflow
+      #   uses: actions/github-script@v6
+      #   with:
+      #     script: |
+      #       const { RUN_NAME } = process.env
+      #       github.rest.actions.createWorkflowDispatch({
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         workflow_id: RUN_NAME,
+      #         ref: 'main',
+      #       })
   identify:
     needs: [generate-run-name, trigger]
     runs-on: ubuntu-latest
